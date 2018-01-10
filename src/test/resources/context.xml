@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd
+           http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.2.xsd"
+       default-lazy-init="false">
+
+    <!-- scan package -->
+    <context:component-scan base-package="com.cover"/>
+    <aop:aspectj-autoproxy proxy-target-class="true"/>
+
+
+    <!--1. redis config -->
+    <bean id="jedisPool" class="redis.clients.jedis.JedisPool">
+        <constructor-arg name="poolConfig" ref="poolConfig"/>
+        <constructor-arg name="host" value="192.168.180.10"/>
+        <constructor-arg name="port" value="6379"/>
+    </bean>
+
+    <bean id="poolConfig" class="org.apache.commons.pool2.impl.GenericObjectPoolConfig">
+        <property name="testOnBorrow" value="true"/>
+    </bean>
+
+    <bean id="redisReetryHandler" class="com.cover.core.RedisReetryHandler">
+        <property name="jedisPool" ref="jedisPool"/>
+    </bean>
+
+
+    <!--2. local memory config -->
+    <bean id="standardReentryHandler" class="com.cover.core.StandardReentryHandler"/>
+
+
+    <!--
+        return types config
+        lg: implements class:InitializerReturnType
+     -->
+    <bean id="returnTypes" class="com.cover.core.Init"/>
+
+
+    <!-- use config 1/2...-->
+    <bean id="reentryAspect" class="com.cover.core.ReentryAspect">
+        <!-- use return types-->
+        <property name="returnTypes" ref="returnTypes"/>
+        <!-- use handler -->
+        <property name="reentryHandler" ref="redisReetryHandler"/>
+    </bean>
+
+</beans>
